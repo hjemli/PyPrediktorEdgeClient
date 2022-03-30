@@ -17,13 +17,13 @@ import clr
 import System
 
 dlls = [
-    'HiveNetApi.dll',
-    'ApisNetUtilities.dll',
-    'Microsoft.Win32.Registry.dll',
-    'HoneystoreNetApi.dll',
-    #'netstandard.dll',
-    'Prediktor.Log.dll',
-    'SentinelRMSCore.dll'
+    {'file':'netstandard.dll', 'minversion':9},
+    {'file':'HiveNetApi.dll'},
+    {'file':'ApisNetUtilities.dll'},
+    {'file':'HoneystoreNetApi.dll'},
+    {'file':'Prediktor.Log.dll'},
+    {'file':'Microsoft.Win32.Registry.dll'},
+    {'file':'SentinelRMSCore.dll', 'maxversion':8},
     ]
 
 if sys.platform == 'win32':
@@ -45,12 +45,16 @@ if sys.platform == 'win32':
         v = winreg.QueryValue(winreg.HKEY_CLASSES_ROOT, path)
         return v.strip('"')
 
+    def hive_version():
+        ver = System.Diagnostics.FileVersionInfo.GetVersionInfo(hive_executable())
+        return ver.ProductMajorPart, ver.ProductMinorPart, ver.ProductBuildPart
+
     def hive_bindir():
         return os.path.dirname(hive_executable())
 
     def hive_basedir():
         tmp = hive_bindir()
-        if (os.path.basename(tmp).lower() == "dbg"):
+        if os.path.basename(tmp).lower() in ["dbg", "debug", "release"]:
             tmp = os.path.dirname(tmp)
         return os.path.dirname(tmp)
 
@@ -80,13 +84,29 @@ def get_install_dir():
 
     import winreg
     try:
-        with winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, r"\CLSID\{51F92300-CA68-11d2-85C3-0000E8404A66}\LocalServer32") as reg:
-            pth = winreg.QueryValue(reg, None).strip('"')
-            return os.path.dirname(pth)
+        bindir = hive_bindir()
+        major, _, _ = hive_version()
+        if major >= 9:
+            base = os.path.basename(bindir).lower()
+            if base in ["debug", "release"]:
+                # Development build
+                srcdir = os.path.dirname(bindir)
+                while os.path.basename(srcdir).lower() != "source":
+                    srcdir = os.path.dirname(srcdir)
+                bindir = os.path.join(srcdir, "Assemblies", "ApisManagementStudio", "Prism", "Prediktor.ApisManagementStudio", "bin", "AnyCpu", base, "win-x64")
+            else:
+                # Foundation install
+                bindir = os.path.join(hive_basedir(), "Apps", "AMS")
+        return bindir
     except:
         with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Prediktor\Apis") as reg:
             l, t = winreg.QueryValueEx(reg, "HiveInstallRoot")
-            return os.path.join(l, 'Bin64')
+            if os.path.exists(os.path.join(l, 'Bin64', 'HiveNetApi.dll')):
+                return os.path.join(l, 'Bin64')
+            elif os.path.exists(os.path.join(l, 'Apps', 'AMS', 'HiveNetApi.dll')):
+                return os.path.join(l, 'Apps', 'AMS')
+            else:
+                raise Error(f"Unable to locate APIS install-dirctory")
 
 def import_apis_asm():
     """
@@ -115,13 +135,21 @@ def import_apis_asm():
 
 
     # Check and add  references to each dll-file
-    for dll_name in dlls:
-        dll_path = os.path.join(loc, dll_name)
+    major, _, _ = hive_version()
+    for dll in dlls:
+        if "minversion" in dll and major < dll["minversion"]:
+            dll["loaded"] = False
+            continue
+        if "maxversion" in dll and major > dll["maxversion"]:
+            dll["loaded"] = False
+            continue
+        dll_path = os.path.join(loc, dll["file"])
         if os.path.exists(dll_path):
             clr.AddReference(dll_path)
             imported_assemblies.append(dll_path)
-        elif dll_name != 'SentinelRMSCore.dll':
-            raise Exception(f"DLL {dll_name} is not present")
+            dll["loaded"] = True
+        else:
+            raise Exception(f"{dll_path} does not exist")
 
     return loc
 
