@@ -3,12 +3,12 @@ setup(
     name='pyprediktoredgeclient',
     packages=find_packages(include=['pyprediktoredgeclient']),
     setup_requires=[
-        "pythonnet>=2.5.2,<3.0"
+        "pythonnet==3.0.0a2"
         ],
     package_data={
-        "": ["dlls/*.dll"]
+        "": ["dlls/*.dll", "app.runtimeconfig.json"],
     },
-    version='0.9.2',
+    version='0.9.3',
     description='A Python library to talk to Prediktor APIS/EDGE',
     author='Prediktor',
     license='MIT'

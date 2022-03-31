@@ -13,16 +13,26 @@ from typing import NamedTuple, Any, List, Optional, Dict, Union
 import winreg
 from enum import Enum, IntEnum
 
+def prepare_clr():
+    import clr_loader
+    import pythonnet
+    from pythonnet.find_libpython import find_libpython
+    os.environ["PYTHONNET_PYDLL"] = find_libpython()
+    config_path = os.path.join(os.path.dirname(__file__), "app.runtimeconfig.json")
+    clr = clr_loader.get_coreclr(config_path);
+    pythonnet.set_runtime(clr)
+    pythonnet.load()
+
+prepare_clr()
 import clr
 import System
 
 dlls = [
-    {'file':'netstandard.dll', 'minversion':9},
     {'file':'HiveNetApi.dll'},
     {'file':'ApisNetUtilities.dll'},
     {'file':'HoneystoreNetApi.dll'},
     {'file':'Prediktor.Log.dll'},
-    {'file':'Microsoft.Win32.Registry.dll'},
+    {'file':'Microsoft.Win32.Registry.dll', 'maxversion':8},
     {'file':'SentinelRMSCore.dll', 'maxversion':8},
     ]
 
