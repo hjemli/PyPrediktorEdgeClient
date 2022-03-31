@@ -32,7 +32,7 @@ dlls = [
     {'file':'ApisNetUtilities.dll'},
     {'file':'HoneystoreNetApi.dll'},
     {'file':'Prediktor.Log.dll'},
-    {'file':'Microsoft.Win32.Registry.dll', 'maxversion':8},
+    {'file':'Microsoft.Win32.Registry.dll'},
     {'file':'SentinelRMSCore.dll', 'maxversion':8},
     ]
 
