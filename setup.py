@@ -8,7 +8,7 @@ setup(
     package_data={
         "": ["dlls/*.dll", "app.runtimeconfig.json"],
     },
-    version='0.9.4',
+    version='0.9.5',
     description='A Python library to talk to Prediktor APIS/EDGE',
     author='Prediktor',
     license='MIT'
