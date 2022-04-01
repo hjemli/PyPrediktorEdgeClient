@@ -420,7 +420,7 @@ class BaseAttribute:
 
 	def get_value(self):
 		v = self.api.Value
-		if self.flag & AttrFlags.Enumerated:
+		if self.flag.HasFlag(AttrFlags.Enumerated):
 			attr_enum = self.api.GetEnumeration()
 			for i,val in enumerate(attr_enum.Values):
 				if val==v:
@@ -431,10 +431,10 @@ class BaseAttribute:
 		return v
 
 	def set_value(self, value):
-		if self.flag & AttrFlags.ReadOnly:
+		if self.flag.HasFlag(AttrFlags.ReadOnly):
 			raise AttributeError(f"Attribute {self.name} is read only")
 
-		if self.flag & AttrFlags.Enumerated:
+		if self.flag.HasFlag(AttrFlags.Enumerated):
 			attr_enum = self.api.GetEnumeration()
             
 			normval = str(value).lower() #Normalized value
