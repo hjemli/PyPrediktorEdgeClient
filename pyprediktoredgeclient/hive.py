@@ -105,9 +105,9 @@ class Hive:
 			return Module(self, modules[key])
 
 		if isinstance(key, str):
-			search_key = _normalize_input(key)
+			search_key = _normalize_input(key, True)
 			for mod in modules:
-				if _normalize_input(mod.Name) == search_key:
+				if _normalize_input(mod.Name, True) == search_key:
 					return Module(self, mod)
 
 			raise Error(f"Invalid module name: '{key}'")
@@ -127,9 +127,9 @@ class Hive:
 		"""
 		Get an attribute that can be used to set on an Item
 		"""
-		search_key = _normalize_input(name)
+		search_key = _normalize_input(name, True)
 		for attr in self._get_attrib():
-			if _normalize_input(attr.Name) == search_key:
+			if _normalize_input(attr.Name, True) == search_key:
 				return Attr(None, attr)
 		raise Error(f'Attribute {name} not found.')
 
@@ -141,12 +141,12 @@ class Hive:
 		return [ModuleType(self, mt) for mt in self._modtypes.values()]
 
 	def get_module_type(self, type_name):
-		"""Return a list containing the name of all known module+types. These
+		"""Return a list containing the name of all known module-types. These
 		names can be used as input to Hive.add_module().
 		"""
-		search_key = _normalize_input(type_name)
+		search_key = _normalize_input(type_name, True)
 		for mt in self._modtypes.values():
-			if _normalize_input(mt.ClassName) == search_key:
+			if _normalize_input(mt.ClassName, True) == search_key:
 				return ModuleType(self,  mt)
 		else:
 			raise Error(f"Unknown module type {type_name}")
@@ -176,12 +176,12 @@ class Hive:
 
 	def find_module_index(self, mod_name):
 		if isinstance(mod_name, Module):
-			search_name = _normalize_input(mod_name.name)
+			search_name = _normalize_input(mod_name.name, True)
 		else:
-			search_name = _normalize_input(mod_name)
+			search_name = _normalize_input(mod_name, True)
 
 		for i, mod in enumerate(self.modules):
-			if _normalize_input(mod.name) == search_name:
+			if _normalize_input(mod.name, True) == search_name:
 				return i
 
 		raise Error(f"Module not found: {mod_name}")
@@ -331,9 +331,9 @@ class Module(BaseContainer):
 			return Item(self, self.api.GetItems()[key])
 
 		if isinstance(key, str):
-			search_key = _normalize_input(key)
+			search_key = _normalize_input(key, True)
 			for obj in self.api.GetItems():
-				if _normalize_input(obj.Name, True) == key:
+				if _normalize_input(obj.Name, True) == search_key:
 					return Item(self, obj)
 			raise Error(f"Invalid item name: '{key}'")
 
@@ -345,9 +345,9 @@ class Module(BaseContainer):
 		return list(self.api.GetItemTypes())
 
 	def get_item_type(self, name: str):
-		search_key = _normalize_input(name)
+		search_key = _normalize_input(name, True)
 		for item_type in self.api.GetItemTypes():
-			if _normalize_input(item_type.Name) == search_key:
+			if _normalize_input(item_type.Name, True) == search_key:
 				return item_type
 		raise Error(f'Unknown item type {name}')
 
@@ -389,9 +389,9 @@ class Module(BaseContainer):
 		return items
 
 	def _get_property(self, name:str):
-		norm_name = _normalize_input(name)
+		norm_name = _normalize_input(name, True)
 		for obj in self.api.GetProperties():
-			if _normalize_input(obj.Name) == norm_name:
+			if _normalize_input(obj.Name, True) == norm_name:
 				return obj
 		raise Error(f"property '{name}' not found")
 
@@ -485,7 +485,7 @@ class Item(BaseContainer):
 		if isinstance(key, Attr):
 			return key
 		if isinstance(key, str):
-			norm_name = _normalize_input(key)
+			norm_name = _normalize_input(key, True)
 			for attr in self.api.GetAttributes():
 				if _normalize_input(attr.Name, True) == norm_name:
 					return Attr(self, attr)
@@ -495,13 +495,13 @@ class Item(BaseContainer):
 
 
 	def get_item_attribute(self, attrname: str):
-		norm_name = _normalize_input(attrname)
+		norm_name = _normalize_input(attrname, True)
 		for attr in self.api.GetAttributes():
 			if _normalize_input(attr.Name, True) == norm_name:
 				return Attr(self, attr)
 		tmpl = self.itemtype.GetNewItemTemplate("")
 		for attr in tmpl.Attributes:
-			if _normalize_input(attr.Name) == norm_name:
+			if _normalize_input(attr.Name, True) == norm_name:
 				return Attr(self, attr)
 		return self.module.hive.get_item_attribute(attrname)
 
