@@ -82,6 +82,9 @@ class Hive:
 		"""Return a list containing all the modules in this hive instance"""
 		return [ Module(self, obj) for obj in self.api.GetModules() ]
 
+	def get_error(self, errorcode: int) -> AnyStr:
+		return self.api.GetErrorString(errorcode)
+
 	def get_eventserver(self):
 		return EventServer(self, self.api.GetEventServer())
 
@@ -348,13 +351,17 @@ class Module(BaseContainer):
 				return item_type
 		raise Error(f'Unknown item type {name}')
 
-	def _add_items(self, template):
-		raw_items, item_error, attr_error, check = self.api.AddItems(template, None, None, None)
+	def _add_items(self, templates):
+		raw_items, item_error, attr_error, check = self.api.AddItems(templates, None, None, False)
 		if check:
-			for i, a_e in enumerate(attr_error):
-				if a_e > 0:
-					t_attr = template.Attributes[i]
-					raise Error(f"Error setting {t_attr.Name}")
+			for n in range(len(item_error)):
+				if item_error[n]:
+					raise Error(f"Error creating item {self.name}.{templates[n].Name}: {self.hive.get_error(item_error[n])}")
+				for m in range(len(attr_error)//len(templates)):
+					if attr_error[n, m]:
+						t_attr = templates[n].Attributes[m]
+						if t_attr.ID not in [1, 5]: # attributes Type and Rights....
+							print(f"WARNING: Failed to set '{self.name}.{templates[n].Name}.{t_attr.Name}': {self.hive.get_error(attr_error[n, m])}")
 		return [Item(self, it) for it in raw_items]
 
 	def add_item(self, item_type, item_name:str, attrs: dict = None, **kw):
